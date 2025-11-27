@@ -43,7 +43,32 @@
       data-bs-target="#sectionModalAdd">
       Add Section
     </button>
-    
+
+    <form id="filterForm" method="GET" action="" class="d-flex gap-2 mb-3">
+
+      <!-- Search -->
+      <input 
+          type="text" 
+          name="search" 
+          id="searchInput"
+          class="form-control"
+          placeholder="Search student or subject"
+          value="{{ request('search') }}"
+      >
+
+      <!-- Dropdown -->
+      <select name="subject_id" id="subjectSelect" class="form-control">
+          <option value="">All Subjects</option>
+          @foreach ($subjectDropdowns as $sub)
+              <option value="{{ $sub->ID }}" 
+                  {{ request('subject_id') == $sub->ID ? 'selected' : '' }}>
+                  {{ $sub->subject_name }}
+              </option>
+          @endforeach
+      </select>
+
+     </form>
+
     {{-- Table for grades - Main Table --}}
     <table class="table table-bordered">
         <thead class="table-light">
@@ -80,7 +105,7 @@
                         data-id="{{ $user->id }}"
                         data-grade="{{ $user->grades }}"
                         data-student="{{ $user->student }}"
-                        data-subject="{{ $user->subject }}"
+                        data-subject="{{ $user->subject_id }}"
                         data-subject_name="{{ $user->subject_name}}">
                         Update
                     </button>
@@ -298,7 +323,6 @@
         document.getElementById('saveBtn').classList.remove('d-none');
       });
 
-
       document.querySelectorAll('.viewUser').forEach(button => {
         button.addEventListener('click', function() {
           document.getElementById('modalUserId').textContent = this.dataset.id;
@@ -307,6 +331,25 @@
           document.getElementById('modalStudent').textContent = this.dataset.student;
         });
       });
+    
+         // Get elements
+    const searchInput = document.getElementById('searchInput');
+    const subjectSelect = document.getElementById('subjectSelect');
+    const form = document.getElementById('filterForm');
+
+    // Submit form on search input change (debounced)
+    let timeout = null;
+    searchInput.addEventListener('keyup', function() {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => {
+            form.submit();
+        }, 500); // wait 500ms after typing stops
+    });
+
+    // Submit form on dropdown change
+    subjectSelect.addEventListener('change', function() {
+        form.submit();
+    });
     </script>
 
 </body>

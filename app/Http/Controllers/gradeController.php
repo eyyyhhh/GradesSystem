@@ -23,17 +23,33 @@ class gradeController extends Controller
 
         return redirect('/');
     }
-    public function showGrade(){
+    public function showGrade(Request $request){
         $subjects = subjectModel::paginate(4,['*'], 'subjects_page');
         $subjectDropdown = subjectModel::all();
 
-        $grades = DB::table('grades')
-            ->join('subject', 'grades.subject', '=', 'subject.id')
-            ->select('subject.*', 'grades.*')
-            ->paginate(4,['*'], 'grades_page');
+        // Base query
+        $query = DB::table('grades')
+            ->join('subject', 'grades.subject_id', '=', 'subject.id')
+            ->select('grades.*', 'subject.subject_name');
 
+        // SEARCH FILTER (student name OR subject name)
+        if ($request->search) {
+            $query->where(function ($q) use ($request) {
+                $q->where('grades.student', 'like', '%' . $request->search . '%')
+                ->orWhere('subject.subject_name', 'like', '%' . $request->search . '%');
+            });
+        }
+        
+        if ($request->subject_id) {
+            $query->where('grades.subject_id', $request->subject_id);
+        }
+         $subjectDropdowns = DB::table('subject')->get();
 
-        return view('welcome', compact('grades', 'subjects', 'subjectDropdown'));
+    
+        // Pagination (keeps search filter)
+        $grades = $query->paginate(4)->withQueryString();
+
+        return view('welcome', compact('grades', 'subjects', 'subjectDropdown','subjectDropdowns'));
 
     }
     public function deleteGrade($id)   
@@ -48,7 +64,7 @@ class gradeController extends Controller
         $grade = gradeModel::where('id', $id)->first();
 
         $grade-> grades = request ('grades');
-        $grade-> subject= request ('subject');
+        $grade-> subject_id= request ('subject');
         $grade->student= request('student');
 
         error_log($grade);
