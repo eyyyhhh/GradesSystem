@@ -4,7 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class gradeModel extends Model
+class recipeModel extends Model
 {
-   protected $table = 'grades';
+     protected $table = 'tblRecipe';
 }

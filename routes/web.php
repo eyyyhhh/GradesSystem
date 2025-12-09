@@ -3,13 +3,13 @@
 use App\Http\Controllers\gradeController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', [gradeController::class, 'showGrade']);
+Route::get('/', [gradeController::class, 'showProduct']);
 
-Route::delete('/grade/{id}', [gradeController::class, 'deleteGrade'])->name('grade.delete');
+Route::delete('/product/{id}', [gradeController::class, 'deleteProduct'])->name('product.delete');
 
-Route::post('/grade/store',[gradeController::class, 'storeGrade']);
-Route::post('/subject/store',[gradeController::class, 'addSubject']);
-Route::post('/section/store',[gradeController::class, 'addSection']);
+Route::post('/product/add',[gradeController::class, 'addProduct']);
+Route::post('/recipe/store',[gradeController::class, 'addRecipe']);
+Route::post('/ingridient/store',[gradeController::class, 'addIngridient']);
 
 
-Route::put('/grade/update/{id}', [gradeController::class, 'updateGrade']);
+Route::put('/product/update/{id}', [gradeController::class, 'updateProduct']);
