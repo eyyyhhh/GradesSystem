@@ -81,50 +81,49 @@
             </tr>
         </thead>
         <tbody>
-            @foreach($product as $products)
-            <tr>
-                <td>{{ $products->id }}</td>
-                <td>{{ $products->productName }}</td>
-                <td>{{ $products->price }}</td>
-                <td>{{ $products->description }}</td>
-                 <td>
-        @foreach($recipes[$products->id] ?? [] as $ing)
-            <span>{{ $ing->ingridientName }}</span><br>
-        @endforeach
-    </td>
-                <td>
-                    <!-- Button to trigger modal -->
-                    <button 
-                      class="btn btn-primary btn-sm viewProduct" 
-                      data-bs-toggle="modal" 
-                      data-bs-target="#productModalView"
-                      data-id="{{ $products->id }}"
-                      data-product_name="{{ $products->productName }}"
-                      data-price="{{ $products->price }}"
-                      data-recipe_id="{{ $products->ingridientName}}"
-                      data-desc="{{ $products->description}}">
-                        View
-                    </button> 
-                    <button 
-                      class="btn btn-primary btn-sm updateProduct" 
-                      data-bs-toggle="modal" 
-                      data-bs-target="#userUpdateView"
-                      data-product_id="{{ $products->id }}"
-                      data-product_name_update="{{ $products->productName }}"
-                      data-price_update="{{ $products->price }}"
-                      data-desc_update="{{ $products->description}}">
-                        Update
-                    </button> 
-                     <form action="{{ route('product.delete', $products->id) }}" method="POST" style="display:inline;">
-                        @csrf
-                        @method('DELETE')
-
-                        <button type="submit" class="btn btn-danger"
-                            onclick="return confirm('Are you sure you want to delete this grade?')">
-                            Delete
-                        </button>
-                    </form> 
-                </td>
+          @foreach($product as $products)
+          <tr>
+            <td>{{ $products->id }}</td>
+            <td>{{ $products->productName }}</td>
+            <td>{{ $products->price }}</td>
+            <td>{{ $products->description }}</td>
+            <td>
+              @foreach($recipes[$products->id] ?? [] as $ing)
+                  <span>{{ $ing->ingridientName }}</span><br>
+              @endforeach
+            </td>
+            <td>
+              <!-- Button to trigger modal -->
+              <button 
+                class="btn btn-primary btn-sm viewProduct" 
+                data-bs-toggle="modal" 
+                data-bs-target="#productModalView"
+                data-id="{{ $products->id }}"
+                data-product_name="{{ $products->productName }}"
+                data-price="{{ $products->price }}"
+                data-recipe="{{ implode(', ', collect($recipes[$products->id] ?? [])->pluck('ingridientName')->toArray()) }}"
+                data-desc="{{ $products->description}}">
+                  View
+              </button> 
+              <button 
+                class="btn btn-primary btn-sm updateProduct" 
+                data-bs-toggle="modal" 
+                data-bs-target="#userUpdateView"
+                data-product_id="{{ $products->id }}"
+                data-product_name_update="{{ $products->productName }}"
+                data-price_update="{{ $products->price }}"
+                data-desc_update="{{ $products->description}}">
+                  Update
+                </button> 
+                <form action="{{ route('product.delete', $products->id) }}" method="POST" style="display:inline;">
+                  @csrf
+                  @method('DELETE')
+                    <button type="submit" class="btn btn-danger"
+                      onclick="return confirm('Are you sure you want to delete this grade?')">
+                      Delete
+                    </button>
+                </form>      
+              </td>
             </tr>
             @endforeach
         </tbody>
@@ -193,11 +192,12 @@
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body">
-              <p><strong>ID:</strong> <span id="modalProductId"></span></p>
-              <p><strong>Product:</strong> <span id="modalProductName"></span></p>
-              <p><strong>Price:</strong> <span id="modalProductPrice"></span></p>
-              <p><strong>Recipe:</strong> <span id="modalProductRecipe"></span></p>
-              <p><strong>Description:</strong> <span id="modalProductDescription"></span></p>
+            <p><strong>ID:</strong> <span id="modalProductId"></span></p>
+            <p><strong>Product:</strong> <span id="modalProductName"></span></p>
+            <p><strong>Price:</strong> <span id="modalProductPrice"></span></p>
+            <p><strong>Description:</strong> <span id="modalProductDescription"></span></p>
+            <hr>
+            <p><strong>Recipe:</strong> <span id="modalProductRecipe"></span></p>
           </div>
         </div>
       </div>
@@ -361,7 +361,7 @@
           document.getElementById('modalProductId').textContent = this.dataset.id;
           document.getElementById('modalProductName').textContent = this.dataset.product_name;
           document.getElementById('modalProductPrice').textContent = this.dataset.price;
-          document.getElementById('modalProductRecipe').textContent = this.dataset.recipe_id;
+          document.getElementById('modalProductRecipe').textContent = this.dataset.recipe;
           document.getElementById('modalProductDescription').textContent = this.dataset.desc;
         });
       });
