@@ -112,7 +112,8 @@
                 data-product_id="{{ $products->id }}"
                 data-product_name_update="{{ $products->productName }}"
                 data-price_update="{{ $products->price }}"
-                data-desc_update="{{ $products->description}}">
+                data-desc_update="{{ $products->description}}"
+                data-ingredients='@json($recipes[$products->id] ?? [])'>
                   Update
                 </button> 
                 <form action="{{ route('product.delete', $products->id) }}" method="POST" style="display:inline;">
@@ -148,13 +149,6 @@
               <div class="form-group">
                 <input type="text" class="form-control mb-2" name="productName" placeholder="Product Name" required>
                 <input type="text" class="form-control mb-2"  name="price" placeholder="Price" required>
-                {{-- <select class="form-control mb-2" name="recipeId" id="editSubject">
-                    @foreach ($queryRecipe as $recipe)
-                    <option value={{ $recipe -> id }}>
-                       {{ $recipe->ingridientName }}
-                    </option> 
-                   @endforeach
-                </select>   --}}
                 <input type="text" class="form-control mb-2"  name="description" placeholder="Description" required>
                 <div id="ingredientWrapper">
                   <div class="ingredient-row mb-3">
@@ -175,11 +169,10 @@
                 </button>
               </div>
               <div class="modal-footer">
-            <button type="submit" class="btn btn-secondary">Add Product</button>
-          </div>
+                <button type="submit" class="btn btn-secondary">Add Product</button>
+              </div>
             </form>
           </div>
-          
         </div>
       </div>
     </div>
@@ -214,20 +207,19 @@
             <form action="/product/update/{id}" id="editForm" method="POST">
               @csrf
               @method('PUT')
-
               <div class="form-group">
                 <input type="text" class="form-control mb-2" id="editProductId" name="id" placeholder="" readonly required>
                 <input type="text" class="form-control mb-2" id="editProduct" name="productName" placeholder="" readonly required>
                 <input type="text" class="form-control mb-2" id="editPrice" name="price" placeholder="" readonly required>
-                 <select class="form-control mb-2" name="recipeId" id="editRecipeId">
-                    @foreach ($queryRecipe as $recipe)
-                    <option  value={{ $recipe -> id }}>
-                       {{ $recipe->ingridientName }}
-                    </option> 
-                   @endforeach
-                </select>
                 <input type="text" class="form-control mb-2" id="editDescription" name="description" placeholder="" readonly required>
               </div>
+              
+              <div id="editIngredientWrapper"></div>
+              <button type="button"
+                      id="addEditRow"
+                      class="btn btn-secondary btn-sm d-none">
+                Add Ingredient
+              </button>
               <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" id="enableEditBtn">Edit</button>
                 <button type="submit" class="btn btn-primary d-none" id="saveBtn">Save</button>
@@ -318,25 +310,69 @@
         wrapper.appendChild(newRow);
     });
 
+     function createIngredientRow(selectedId = '', qty = '') {
+    return `
+      <div class="ingredient-row mb-2 d-flex gap-2">
+        <select class="form-control" name="ingridientId[]" required>
+          <option value="">Select Ingredient</option>
+          @foreach ($queryIngridient as $ing)
+            <option value="{{ $ing->Id }}"
+              ${selectedId == '{{ $ing->Id }}' ? 'selected' : ''}>
+              {{ $ing->ingridientName }}
+            </option>
+          @endforeach
+        </select>
+
+        <input type="number"
+               class="form-control"
+               name="qty[]"
+               value="${qty}"
+               placeholder="Qty"
+               required>
+
+        <button type="button" class="btn btn-danger removeRow">✕</button>
+      </div>
+    `;
+  }
+
       document.querySelectorAll('.updateProduct').forEach(button =>{
         button.addEventListener('click', function(){
-          
+              console.log(JSON.parse(this.dataset.ingredients));
             // fill input fields
           document.getElementById('editProductId').value = this.dataset.product_id;
           document.getElementById('editProduct').value= this.dataset.product_name_update;
           document.getElementById('editPrice').value = this.dataset.price_update;
-          document.getElementById('editRecipeId').value = this.dataset.recipe_id_update;
           document.getElementById('editDescription').value= this.dataset.desc_update;
 
   
           // update form action
           document.getElementById('editForm').action = "/product/update/" + this.dataset.product_id;
 
+
+            // Ingredients
+          const ingredients = JSON.parse(this.dataset.ingredients);
+          const wrapper = document.getElementById('editIngredientWrapper');
+          wrapper.innerHTML = '';
+
+          ingredients.forEach(ing => {
+            wrapper.insertAdjacentHTML(
+              'beforeend',
+              createIngredientRow(ing.ingridientId, ing.qty)
+            );
+          });
+
+            // Lock fields initially
+          document.querySelectorAll('#editForm input, #editForm select')
+            .forEach(el => el.readOnly = true);
+
+          document.getElementById('addEditRow').classList.add('d-none');
+          saveBtn.classList.add('d-none');
+          enableEditBtn.classList.remove('d-none');
+
           // reset: disable editing and hide save button
           document.getElementById('editProductId').readOnly = true;
           document.getElementById('editProduct').readOnly = true;
           document.getElementById('editPrice').readOnly = true;
-          document.getElementById('editRecipeId').readOnly = true;
           document.getElementById('editDescription').readOnly = true;
 
         });
@@ -344,18 +380,38 @@
 
       document.getElementById('enableEditBtn').addEventListener('click', function(){
 
+    
         // enable editing
         document.getElementById('editProductId').readOnly = false;
         document.getElementById('editProduct').readOnly = false;
         document.getElementById('editPrice').readOnly = false;
-        document.getElementById('editRecipeId').readOnly = false;
         document.getElementById('editDescription').readOnly = false;
 
         // show Save button
         document.getElementById('enableEditBtn').classList.add('d-none');
         document.getElementById('saveBtn').classList.remove('d-none');
+
+          document.querySelectorAll('#editForm input, #editForm select')
+          .forEach(el => el.readOnly = false);
+
+        document.getElementById('addEditRow').classList.remove('d-none');
+        enableEditBtn.classList.add('d-none');
+        saveBtn.classList.remove('d-none');
       });
 
+      document.getElementById('addEditRow').addEventListener('click', () => {
+  document.getElementById('editIngredientWrapper')
+    .insertAdjacentHTML('beforeend', createIngredientRow());
+});
+
+document.addEventListener('click', e => {
+  if (e.target.classList.contains('removeRow')) {
+    e.target.closest('.ingredient-row').remove();
+  }
+});
+
+
+ 
     document.querySelectorAll('.viewProduct').forEach(button => {
         button.addEventListener('click', function() {
           document.getElementById('modalProductId').textContent = this.dataset.id;

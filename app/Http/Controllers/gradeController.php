@@ -45,6 +45,7 @@ class gradeController extends Controller
     //     $subjects = subjectModel::paginate(4);
     //     return view('welcome', compact('subjects'));
     // }
+
     public function showProduct() {
         $product =  productModel::paginate(4);
 
@@ -55,7 +56,12 @@ class gradeController extends Controller
 
         $recipes = DB::table('tblRecipe')
             ->join('tblIngridient', 'tblRecipe.ingridientId', '=', 'tblIngridient.id')
-            ->select('tblRecipe.recipeId', 'tblIngridient.ingridientName')
+            ->select(
+    'tblRecipe.recipeId',
+    'tblRecipe.ingridientId',
+    'tblRecipe.qty',
+    'tblIngridient.ingridientName'
+)
             ->get()
             ->groupBy('recipeId'); // group ingredients per product
 
@@ -106,20 +112,37 @@ class gradeController extends Controller
 
         return redirect()->back()->with('success', 'Grade deleted successfully.');
     }
-    public function updateProduct($id){
-        $product = productModel::where('id', $id)->first();
+    public function updateProduct(Request $request, $id)
+    {
+        // 1️⃣ Update Product
+        $product = productModel::findOrFail($id);
 
-        $product-> productName = request ('productName');
-        $product-> price= request ('price');
-        $product->recipeId= request('recipeId');
-        $product->description= request('description');
-
-
-        error_log($product);
+        $product->productName = $request->productName;
+        $product->price = $request->price;
+        $product->description = $request->description;
         $product->save();
 
-        return redirect('/');
+        // 2️⃣ Remove old ingredients (important)
+        DB::table('tblRecipe')
+            ->where('recipeId', $id)
+            ->delete();
+
+        // 3️⃣ Insert updated ingredients
+        if ($request->ingridientId) {
+            foreach ($request->ingridientId as $index => $ingId) {
+                DB::table('tblRecipe')->insert([
+                    'recipeId' => $id,
+                    'ingridientId' => $ingId,
+                    'qty' => $request->qty[$index],
+                    'created_at' => now(),
+                    'updated_at' => now()
+                ]);
+            }
+        }
+
+        return redirect('/')->with('success', 'Product updated successfully');
     }
+
     public function addRecipe(){
       
         $recipeId = request('recipeId');
