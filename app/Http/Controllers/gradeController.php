@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\categoryModel;
 use Illuminate\Http\Request;
 use App\Models\productModel;
 use App\Models\ingridientModel;
@@ -47,7 +48,7 @@ class gradeController extends Controller
     // }
 
     public function showProduct() {
-        $product =  productModel::paginate(4);
+        $product =  productModel::paginate(5);
 
         $queryRecipe = DB::table('tblRecipe')
             ->join('tblIngridient', 'tblRecipe.ingridientId', '=', 'tblIngridient.id')
@@ -58,10 +59,9 @@ class gradeController extends Controller
             ->join('tblIngridient', 'tblRecipe.ingridientId', '=', 'tblIngridient.id')
             ->select(
     'tblRecipe.recipeId',
-    'tblRecipe.ingridientId',
-    'tblRecipe.qty',
-    'tblIngridient.ingridientName'
-)
+            'tblRecipe.ingridientId',
+            'tblRecipe.qty',
+            'tblIngridient.ingridientName' )
             ->get()
             ->groupBy('recipeId'); // group ingredients per product
 
@@ -73,22 +73,35 @@ class gradeController extends Controller
                 'tblRecipe.ingridientId',
                 'tblIngridient.ingridientName'
             )
-            ->paginate(4);
+            ->paginate(5);
 
         $queryIngridient = ingridientModel::all();
+        $categories = categoryModel::all();
+    
 
-        return view('welcome', compact('product', 'queryRecipe', 'queryIngridient', 'products', 'recipes'));
+        return view('welcome', compact('product', 'queryRecipe', 'queryIngridient', 'products', 'recipes', 'categories'));
 
     }
-    public function addProduct(){
+    public function addProduct(Request $request){
         $product = new productModel();
 
         $product -> productName = request ('productName');
         $product-> price = request('price');
         $product-> description = request('description');
 
+        if (request()->hasFile('photo')) {
+            $path = request()->file('photo')->store('products', 'public');
+            $product->productPicture = $path;   // save image path to DB
+        }
+
         error_log($product);
         $product->save();
+
+         if($request->has('categories')){
+        $product->categories()->attach($request->categories);
+         }
+        error_log(print_r($product->toArray(), true));
+      
 
         $recipeId = $product->id;
 
@@ -142,7 +155,6 @@ class gradeController extends Controller
 
         return redirect('/')->with('success', 'Product updated successfully');
     }
-
     public function addRecipe(){
       
         $recipeId = request('recipeId');
@@ -169,5 +181,17 @@ class gradeController extends Controller
         $ingridient->save();
 
         return redirect('/');
+    }
+    public function addCategory(){
+        $category = new categoryModel();
+
+        $category -> category = request('category');
+        $category -> description = request('description');
+
+        error_log($category);
+        $category -> save();
+
+        return redirect('/');
+
     }
 }

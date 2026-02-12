@@ -1,10 +1,4 @@
-<!DOCTYPE html>
-<html>
-<head>
-       <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</head>
-    <title>Product Table</title>
+
     <style>
         table {
             border-collapse: collapse;
@@ -20,8 +14,14 @@
             background: #f4f4f4;
         }
     </style>
-</head>
-<body>
+
+
+
+@extends('layouts.dashboard')  <!-- Use the layout -->
+
+@section('title', 'Home')       <!-- Page title -->
+
+@section('content')  
     <h2 style="text-align:center;"> Product</h2>
      <button
         class="btn btn-primary btn-sm viewUser" 
@@ -43,6 +43,14 @@
       data-bs-target="#ingridientModalAdd">
       Add Ingrident
     </button>
+
+     <button
+        class="btn btn-primary btn-sm viewUser" 
+        data-bs-toggle="modal" 
+        data-bs-target="#categoryModalAdd">
+      Add Category
+     </button>
+
     {{-- Filter and Search --}}
     {{-- <form id="filterForm" method="GET" action="" class="d-flex gap-2 mb-3">
 
@@ -87,6 +95,14 @@
             <td>{{ $products->productName }}</td>
             <td>{{ $products->price }}</td>
             <td>{{ $products->description }}</td>
+            <td>
+              <img 
+                src="{{ asset('storage/' . $products->productPicture) }}" 
+                width="80" 
+                height="80"
+                style="object-fit: cover;"
+                >
+            </td>
             <td>
               @foreach($recipes[$products->id] ?? [] as $ing)
                   <span>{{ $ing->ingridientName }}</span><br>
@@ -133,6 +149,38 @@
     <div class="d-flex justify-content-center">
       {{ $product->links() }}
     </div>
+    <div class="container mt-4">
+      <div class="row">
+        @foreach($product as $products)
+          <div class="col-md-3 mb-4 viewProduct"
+           data-bs-toggle="modal" 
+                data-bs-target="#productModalView"
+                data-id="{{ $products->id }}"
+                data-product_name="{{ $products->productName }}"
+                data-price="{{ $products->price }}"
+                data-recipe="{{ implode(', ', collect($recipes[$products->id] ?? [])->pluck('ingridientName')->toArray()) }}"
+                data-desc="{{ $products->description}}">
+            <div class="card h-100 shadow-sm">
+              <img 
+                src="{{ asset('storage/' . $products->productPicture) }}"
+                class="card-img-top"
+                style="height:200px; object-fit:cover;"
+                alt="Product Image">
+
+              <div class="card-body">
+                <h5 class="card-title">{{ $products->productName }}</h5>
+                <p class="card-text">₱{{ $products->price }}</p>
+                <p class="card-text text-muted">
+                  {{ $products->description }}
+                </p>
+              </div>
+
+            </div>
+          </div>
+        @endforeach
+      </div>
+    </div>
+
 
     <!-- Bootstrap Modals -->
     {{-- Add Modal - Product --}}
@@ -144,12 +192,18 @@
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body">
-            <form action="/product/add" method="POST">
+            <form action="/product/add" method="POST" enctype="multipart/form-data">
               @csrf
               <div class="form-group">
                 <input type="text" class="form-control mb-2" name="productName" placeholder="Product Name" required>
                 <input type="text" class="form-control mb-2"  name="price" placeholder="Price" required>
                 <input type="text" class="form-control mb-2"  name="description" placeholder="Description" required>
+                <label>Categories</label>
+                <select name="categories[]" id="categories" multiple  class="form-control mb-2">
+                    @foreach($categories as $cat)
+                        <option value="{{ $cat->id }}">{{ $cat->category }}</option>
+                    @endforeach
+                </select>
                 <div id="ingredientWrapper">
                   <div class="ingredient-row mb-3">
                     <select class="form-control mb-2" name="ingridientId[]" required>
@@ -167,6 +221,7 @@
                 <button type="button" id="addRow" class="btn btn-secondary btn-sm">
                   Add Ingredient
                 </button>
+                 <input type="file" name="photo">
               </div>
               <div class="modal-footer">
                 <button type="submit" class="btn btn-secondary">Add Product</button>
@@ -293,9 +348,41 @@
         </div>
       </div>
     </div>
+    {{-- Add Modal - Category --}}
+    <div class="modal fade" id="categoryModalAdd" tabindex="-1" aria-labelledby="userModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="userModalLabel">Category Details</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <form action="/category/store" method="POST">
+              @csrf
+              <div class="form-group">
+                <input type="text" class="form-control mb-2" id="editSubject" name="category" placeholder="Category" required>
+                <input type="text" class="form-control mb-2" id="editStudent" name="description" placeholder="Description" required>
+              </div>
+              <div class="modal-footer">
+            <button type="submit" class="btn btn-secondary">Add Category</button>
+          </div>
+            </form>
+          </div>
+          
+        </div>
+      </div>
+    </div>
+
      <!-- Script to populate modal -->
     <script>
-
+      //category
+$('#productModalAdd').on('shown.bs.modal', function() {
+    $('#categories').select2({
+        placeholder: "Select categories",
+        width: '100%',
+        dropdownParent: $('#productModalAdd') // Important!
+    });
+});
       document.getElementById('addRow').addEventListener('click', function () {
         let wrapper = document.getElementById('ingredientWrapper');
 
@@ -442,5 +529,4 @@ document.addEventListener('click', e => {
       });
     </script>
 
-</body>
-</html>
+@endsection
